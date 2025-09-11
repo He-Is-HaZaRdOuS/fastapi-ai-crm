@@ -1,0 +1,19 @@
+[project]
+name = "fastapi-ai-crm"
+version = "0.1.0"
+description = "AI Powered Mini-CRM REST API written using FastAPI"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.16.5",
+    "fastapi[standard]>=0.116.1",
+    "passlib[bcrypt]>=1.7.4",
+    "psycopg>=3.2.10",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "pymysql>=1.1.2",
+    "python-dotenv>=1.1.1",
+    "python-jose[cryptography]>=3.5.0",
+    "sqlmodel>=0.0.24",
+    "uvicorn>=0.35.0",
+]
