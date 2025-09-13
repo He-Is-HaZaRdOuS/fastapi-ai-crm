@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     API_VERSION: str = "v1"
-    API_PREFIX: str = f"/{API_VERSION}"
+    API_PREFIX: str = f"/api/{API_VERSION}"
 
     @property
     def DB_URL(self) -> str:

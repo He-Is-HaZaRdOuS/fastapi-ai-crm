@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
@@ -15,10 +15,9 @@ from app.schemas.user import PasswordChange, Token, UserCreate, UserOut
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("/signup", response_model=UserOut)
+@router.post("/signup", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def signup(user_in: UserCreate, session: Session = Depends(get_session)):
-    user = service.create_user(user_in, session)
-    return user
+    return service.create_user(user_in, session)
 
 
 @router.post("/login", response_model=Token)
@@ -26,36 +25,24 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
 ):
-    user = service.authenticate_user(
-        form_data.username, form_data.password, session
-    )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        )
-    access_token_expires = timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-    token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    return {"access_token": token, "token_type": "bearer"}
+    return service.login_user(form_data.username, form_data.password, session)
 
 
 @router.get("/", response_model=list[UserOut])
 async def get_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
     session: Session = Depends(get_session),
-    user: User = authorize_admin("users:read"),
+    user: User = Depends(authorize_admin("users:read")),
 ):
-    return service.get_users(session)
+    return service.get_users(skip, limit, session=session)
 
 
 @router.get("/{resource_id}", response_model=UserOut)
 async def get_user_by_id(
     resource_id: int,
     session: Session = Depends(get_session),
-    user: User = authorize_admin("users:read"),
+    user: User = Depends(authorize_admin("users:read")),
 ):
     return service.get_user_by_id(resource_id, session)
 
@@ -64,7 +51,7 @@ async def get_user_by_id(
 async def change_password(
     password_change: PasswordChange,
     session: Session = Depends(get_session),
-    user: User = authorize_admin("users:update"),
+    user: User = Depends(authorize_admin("users:update")),
 ):
     return service.change_password(session, user, password_change)
 
@@ -73,6 +60,6 @@ async def change_password(
 async def delete_user_by_id(
     resource_id: int,
     session: Session = Depends(get_session),
-    user: User = authorize_admin("users:delete"),
+    user: User = Depends(authorize_admin("users:delete")),
 ):
     return service.delete_user_by_id(resource_id, session)

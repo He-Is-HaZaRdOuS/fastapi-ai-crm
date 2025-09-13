@@ -37,3 +37,7 @@ class InvalidPasswordError(UserError):
 class AuthenticationError(HTTPException):
     def __init__(self, message: str = "Could not validate user"):
         super().__init__(status_code=401, detail=message)
+
+class TokenError(HTTPException):
+    def __init__(self, message: str = "Invalid Credentials"):
+        super().__init__(status_code=401, detail=message)

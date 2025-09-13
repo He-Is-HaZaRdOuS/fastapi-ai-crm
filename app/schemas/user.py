@@ -1,9 +1,13 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ValidationInfo, field_validator
 
 
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+
+    @field_validator('email')
+    def lowercase_email(cls, value: str, info: ValidationInfo):
+        return value.lower()
 
 
 class UserOut(BaseModel):

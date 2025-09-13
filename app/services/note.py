@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
-from sqlmodel import Session, select
+from sqlmodel import Session, Sequence, select
 from sqlmodel.main import SQLModel
 
+from app.core.exceptions import NoteNotFoundError
 from app.core.summarizer import get_summarizer
 from app.db.session import engine
 from app.models.note import Note
@@ -27,16 +28,23 @@ def create_note(note_in: NoteCreate, user_id: int, session: Session) -> Note:
     return note
 
 
-def get_user_notes(user_id: int, session: Session):
-    return session.exec(select(Note).where(Note.user_id == user_id)).all()
+def get_user_notes(user_id: int, skip: int, limit: int, session: Session) -> Sequence[Note]:
+    return session.exec(select(Note).where(Note.user_id == user_id).offset(skip).limit(limit)).all()
 
 
-def get_note_by_id(note_id: int, session: Session):
-    return session.exec(select(Note).where(Note.id == note_id)).first()
+def get_note_by_id(note_id: int, session: Session) -> Note | None:
+    note = session.exec(select(Note).where(Note.id == note_id)).first()
+    if note is None:
+        raise NoteNotFoundError
+    return note
 
 
-def update_note(note: Note, content: str, session: Session):
-    note.content = content
+def update_note(note_id: int, note_in: NoteCreate, session: Session):
+    note = get_note_by_id(note_id, session)
+    if note is None:
+        raise NoteNotFoundError
+
+    note.content = note_in.content
     note.updated_at = datetime.now(timezone.utc)
     session.add(note)
     session.commit()
@@ -44,7 +52,11 @@ def update_note(note: Note, content: str, session: Session):
     return note
 
 
-def delete_note(note: Note, session: Session):
+def delete_note(note_id: int, session: Session):
+    note = get_note_by_id(note_id, session)
+    if note is None:
+        raise NoteNotFoundError
+
     session.delete(note)
     session.commit()
 

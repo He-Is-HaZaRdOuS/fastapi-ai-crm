@@ -73,7 +73,7 @@ def authorize_user_or_admin(
             detail="You do not have access to this resource"
         )
 
-    return Depends(dependency)
+    return dependency
 
 def authorize_admin(
     permission_name: str,
@@ -91,4 +91,4 @@ def authorize_admin(
             detail="You do not have access to this resource"
         )
 
-    return Depends(dependency)
+    return dependency
