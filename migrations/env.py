@@ -5,9 +5,9 @@ from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
 from app.core.config import settings
-from app.models.note import Note
-from app.models.rbac import Permission, Role, RolePermissionLink
-from app.models.user import User, UserRoleLink
+from app.models.user import *
+from app.models.note import *
+from app.models.rbac import *
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 
 import app.services.note as service
-from app.core.auth import get_current_user, authorize
+from app.core.auth import authorize_user_or_admin, get_current_user
 from app.db.session import get_session
 from app.models.note import Note
 from app.models.user import User
@@ -33,7 +33,7 @@ async def get_my_notes(
 async def get_note(
     resource_id: int,
     session: Session = Depends(get_session),
-    user: User = authorize("notes:read", service.get_note_owner),
+    user: User = authorize_user_or_admin("notes:read", service.get_note_owner),
 ):
     note = service.get_note_by_id(resource_id, session)
     if not note:
@@ -48,7 +48,9 @@ async def update_note(
     resource_id: int,
     note_in: NoteCreate,
     session: Session = Depends(get_session),
-    user: User = authorize("notes:update", service.get_note_owner),
+    user: User = authorize_user_or_admin(
+        "notes:update", service.get_note_owner
+    ),
 ):
     note = service.get_note_by_id(resource_id, session)
     if not note:
@@ -62,7 +64,9 @@ async def update_note(
 async def delete_note(
     resource_id: int,
     session: Session = Depends(get_session),
-    user: User = authorize("notes:delete", service.get_note_owner),
+    user: User = authorize_user_or_admin(
+        "notes:delete", service.get_note_owner
+    ),
 ):
     note = service.get_note_by_id(resource_id, session)
     if not note:

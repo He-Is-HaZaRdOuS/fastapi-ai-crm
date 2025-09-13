@@ -1,19 +1,39 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse
 from sqlmodel import Session
-from contextlib import asynccontextmanager
 
 from app.api import router as api_router
 from app.core.init_rbac import init_rbac
+from app.core.queue import start_workers
+from app.core.summarizer import summarizer
 from app.db.session import engine
+from app.models.note import *
+from app.models.rbac import *
+from app.models.user import *
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Load summarization model once
+    app.state.summarizer = summarizer
     with Session(engine) as session:
-        pass
-        # init_rbac(session, "configuration/rbac_config.toml")
-    yield
+        # pass
+        init_rbac(session, "configuration/rbac_config.toml")
+
+    # Start background workers
+    app.state.worker_tasks = await start_workers(num_workers=2)
+
+    try:
+        yield
+    finally:
+        # Shutdown workers on app exit
+        for task in app.state.worker_tasks:
+            task.cancel()
+        await asyncio.gather(*app.state.worker_tasks, return_exceptions=True)
+
 
 app = FastAPI(title="FastAPI AI Mini-CRM", lifespan=lifespan)
 

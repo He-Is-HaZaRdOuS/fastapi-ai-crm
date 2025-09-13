@@ -5,11 +5,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
 import app.services.user as service
+from app.core.auth import authorize_admin
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.db.session import get_session
 from app.models.user import User
-from app.schemas.user import Token, UserCreate, UserOut
+from app.schemas.user import PasswordChange, Token, UserCreate, UserOut
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -43,5 +44,35 @@ async def login(
 
 
 @router.get("/", response_model=list[UserOut])
-async def list_users(session: Session = Depends(get_session)):
+async def get_users(
+    session: Session = Depends(get_session),
+    user: User = authorize_admin("users:read"),
+):
     return service.get_users(session)
+
+
+@router.get("/{resource_id}", response_model=UserOut)
+async def get_user_by_id(
+    resource_id: int,
+    session: Session = Depends(get_session),
+    user: User = authorize_admin("users:read"),
+):
+    return service.get_user_by_id(resource_id, session)
+
+
+@router.put("/change-password", status_code=status.HTTP_200_OK)
+async def change_password(
+    password_change: PasswordChange,
+    session: Session = Depends(get_session),
+    user: User = authorize_admin("users:update"),
+):
+    return service.change_password(session, user, password_change)
+
+
+@router.delete("/{resource_id}", response_model=UserOut)
+async def delete_user_by_id(
+    resource_id: int,
+    session: Session = Depends(get_session),
+    user: User = authorize_admin("users:delete"),
+):
+    return service.delete_user_by_id(resource_id, session)

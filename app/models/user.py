@@ -1,7 +1,5 @@
 from typing import List, Optional
-
 from sqlmodel import SQLModel, Field, Relationship
-
 
 class UserRoleLink(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", primary_key=True)
@@ -12,3 +10,4 @@ class User(SQLModel, table=True):
     email: str = Field(index=True, unique=True, nullable=False)
     hashed_password: str
     roles: List["Role"] = Relationship(back_populates="users", link_model=UserRoleLink)
+    notes: List["Note"] = Relationship(back_populates="user")

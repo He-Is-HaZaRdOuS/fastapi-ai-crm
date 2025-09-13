@@ -4,10 +4,11 @@ from sqlmodel import Session, select
 
 from app.core.input_validator import email_is_valid, password_is_valid
 from app.core.security import hash_password, verify_password
+from app.core.exceptions import UserError, UserNotFoundError, PasswordMismatchError, InvalidPasswordError, PaswordRequirementsNotMetError
 from app.db.session import get_session
 from app.models.user import User, UserRoleLink
 from app.models.rbac import Role
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, PasswordChange
 
 
 def get_users(session: Session = Depends(get_session)):
@@ -19,6 +20,24 @@ def get_user_by_email(
 ) -> User | None:
     result = session.exec(select(User).where(User.email == email))
     return result.first()
+
+
+def get_user_by_id(
+    user_id: int, session: Session = Depends(get_session)
+) -> User | None:
+    result = session.exec(select(User).where(User.id == user_id))
+    return result.first()
+
+
+def delete_user_by_id(
+    user_id: int, session: Session = Depends(get_session)
+) -> User | None:
+    result = session.exec(select(User).where(User.id == user_id)).first()
+    if result is None:
+        raise UserNotFoundError
+    session.delete(result)
+    session.commit()
+    return result
 
 
 def create_user(
@@ -54,6 +73,28 @@ def create_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this email already exists",
         )
+
+def change_password(session: Session, user: User, password_change: PasswordChange) -> None:
+    try:
+        if user is None:
+            raise UserNotFoundError
+
+        # Verify current password
+        if not verify_password(password_change.current_password, user.hashed_password):
+            raise InvalidPasswordError()
+
+        if not password_is_valid(password_change.new_password):
+            raise PaswordRequirementsNotMetError
+
+        # Verify new passwords match
+        if password_change.new_password != password_change.new_password_confirm:
+            raise PasswordMismatchError()
+
+        # Update password
+        user.hashed_password = hash_password(password_change.new_password)
+        session.commit()
+    except Exception as e:
+        raise
 
 
 def authenticate_user(
