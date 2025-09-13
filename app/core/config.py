@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_DRIVER: str = "sqlite"  # fallback
     SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    API_VERSION: str = "v1"
+    API_PREFIX: str = f"/{API_VERSION}"
 
     @property
     def DB_URL(self) -> str:
@@ -21,7 +25,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-# print(settings.DB_DRIVER)  # sanity check
-# print(settings.DB_URL)
-# print(settings.DB_HOST)
-# print(settings.SECRET_KEY)

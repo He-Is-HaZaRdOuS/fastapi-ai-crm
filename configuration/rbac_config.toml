@@ -1,0 +1,8 @@
+[roles.ADMIN]
+permissions = ["notes:read", "notes:update", "notes:delete", "users:read", "users:update", "users:delete"]
+
+[roles.AGENT]
+permissions = []
+
+[users.admins]
+emails = ["admin@admin.com"]

@@ -1,9 +1,29 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse
+from sqlmodel import Session
+from contextlib import asynccontextmanager
 
 from app.api import router as api_router
+from app.core.init_rbac import init_rbac
+from app.db.session import engine
 
-app = FastAPI(title="FastAPI AI Mini-CRM")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    with Session(engine) as session:
+        pass
+        # init_rbac(session, "configuration/rbac_config.toml")
+    yield
+
+app = FastAPI(title="FastAPI AI Mini-CRM", lifespan=lifespan)
+
+
+# @app.on_event("startup")
+# def startup_event():
+#     with Session(engine) as session:
+#         init_rbac(session, "configuration/rbac_config.toml")
+
+
 app.include_router(api_router)
 
 favicon_path = "favicon.ico"
