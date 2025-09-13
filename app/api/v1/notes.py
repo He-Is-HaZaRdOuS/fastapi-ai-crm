@@ -52,7 +52,7 @@ async def update_note(
     return service.update_note(resource_id, note_in, session=session)
 
 
-@router.delete("/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{resource_id}", response_model=NoteOut)
 async def delete_note(
     resource_id: int,
     session: Session = Depends(get_session),
@@ -60,5 +60,4 @@ async def delete_note(
         "notes:delete", service.get_note_owner
     ),
 )):
-    service.delete_note(resource_id, session=session)
-    return
+    return service.delete_note(resource_id, session=session)

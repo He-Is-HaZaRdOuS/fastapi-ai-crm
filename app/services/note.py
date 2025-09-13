@@ -41,9 +41,6 @@ def get_note_by_id(note_id: int, session: Session) -> Note | None:
 
 def update_note(note_id: int, note_in: NoteCreate, session: Session):
     note = get_note_by_id(note_id, session)
-    if note is None:
-        raise NoteNotFoundError
-
     note.content = note_in.content
     note.updated_at = datetime.now(timezone.utc)
     session.add(note)
@@ -54,12 +51,9 @@ def update_note(note_id: int, note_in: NoteCreate, session: Session):
 
 def delete_note(note_id: int, session: Session):
     note = get_note_by_id(note_id, session)
-    if note is None:
-        raise NoteNotFoundError
-
     session.delete(note)
     session.commit()
-
+    return note
 
 def summarize_note(note_id: int):
     with Session(engine) as session:
