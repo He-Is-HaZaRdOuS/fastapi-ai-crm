@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     API_VERSION: str = "v1"
     API_PREFIX: str = f"/api/{API_VERSION}"
+    PORT: int = 8000
 
     @property
     def DB_URL(self) -> str:
@@ -22,6 +23,9 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()
+print(settings.DB_DRIVER)
+print(settings.DB_URL)

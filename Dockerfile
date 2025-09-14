@@ -1,17 +1,36 @@
-FROM python:3.12-slim
+## ------------------------------- Builder Stage ------------------------------ ##
+FROM python:3.13-bookworm AS builder
 
-# Install uv.
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    build-essential curl libpq-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy the application into the container.
-COPY . /app
+# Download the latest installer, install it and then remove it
+ADD https://astral.sh/uv/install.sh /install.sh
+RUN chmod -R 655 /install.sh && /install.sh && rm /install.sh
 
-# Install the application dependencies.
+# Set up the UV environment path correctly
+ENV PATH="/root/.local/bin:$PATH"
+
 WORKDIR /app
-RUN uv sync --frozen --no-cache
 
-# set env var for uvicorn
-ENV PYTHONUNBUFFERED=1
+COPY ./pyproject.toml .
 
-# Run the application with uvicorn.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN uv sync
+
+## ------------------------------- Production Stage ------------------------------ ##
+FROM python:3.13-slim-bookworm AS production
+
+WORKDIR /app
+
+COPY . .
+COPY --from=builder /app/.venv .venv
+
+# Set up environment variables for production
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Expose the specified port for FastAPI
+EXPOSE $PORT
+
+# Start
+CMD ["/bin/sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
