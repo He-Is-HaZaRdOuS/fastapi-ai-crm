@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
 import app.services.user as service
-from app.core.auth import authorize_admin
+from app.core.auth import authorize_admin, get_current_user
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.db.session import get_session
@@ -51,7 +51,7 @@ async def get_user_by_id(
 async def change_password(
     password_change: PasswordChange,
     session: Session = Depends(get_session),
-    user: User = Depends(authorize_admin("users:update")),
+    user: User = Depends(get_current_user),
 ):
     return service.change_password(session, user, password_change)
 
