@@ -1,6 +1,9 @@
-from transformers import pipeline
+# from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
-summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+# model_id = "google/t5-efficient-mini"
+# tokenizer = AutoTokenizer.from_pretrained(model_id)
+# model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
+# summarizer = pipeline("summarization", model=model, tokenizer=tokenizer, device=-1)
 
-def get_summarizer():
-    return summarizer
+def summarizer(input: str) -> str:
+    return "summary of following:" + input

@@ -4,7 +4,7 @@ from sqlmodel import Session, Sequence, select
 from sqlmodel.main import SQLModel
 
 from app.core.exceptions import NoteNotFoundError
-from app.core.summarizer import get_summarizer
+from app.core.summarizer import summarizer
 from app.db.session import engine
 from app.models.note import Note
 from app.schemas.note import NoteCreate
@@ -59,23 +59,24 @@ def summarize_note(note_id: int):
     with Session(engine) as session:
         note = session.exec(select(Note).where(Note.id == note_id)).first()
         if not note:
-            return
+            return None
 
         note.status = "processing"
         session.commit()
 
         try:
-            # DEMO: intentional fail trigger
             if "__FAIL__" in (note.content or ""):
-                note.status = "processing"
-                session.commit()
                 raise RuntimeError("Intentional demo failure triggered by token __FAIL__")
 
-            summarizer = get_summarizer()
-            result = summarizer(note.content, max_length=130, min_length=30, do_sample=False)
-            note.summary = result[0]["summary_text"]
+            # result = summarizer("summarize: " + note.content, max_new_tokens=50, num_beams=4, no_repeat_ngram_size=2, do_sample=False)
+            # note.summary = result[0]["summary_text"]
+            result = summarizer(note.content)
+            note.summary = result
             note.status = "done"
-            session.commit()
-        except Exception:
+        except Exception as e:
             note.status = "failed"
+            note.summary = None
+        finally:
             session.commit()
+            session.refresh(note)
+            return note  # <— always return the updated note
