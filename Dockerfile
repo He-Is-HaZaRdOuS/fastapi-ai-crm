@@ -30,6 +30,7 @@ COPY --from=builder /app/.venv .venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Expose the specified port for FastAPI
+ENV PORT=8000
 EXPOSE $PORT
 
 # Start
